@@ -14,8 +14,8 @@ from requests import HTTPError
 import requests
 
 from resalloc_ibm_cloud.argparsers import powervs_arg_parser
-from resalloc_ibm_cloud.exceptions import PowerVSNotFoundException
-from resalloc_ibm_cloud.helpers import powervs_name, run_playbook, setup_logging, wait_for_ssh
+from resalloc_ibm_cloud.exceptions import PowerVSInvalidNameException, PowerVSNotFoundException
+from resalloc_ibm_cloud.helpers import run_playbook, setup_logging, wait_for_ssh
 from resalloc_ibm_cloud.powervs.credentials import get_powervs_credentials
 from resalloc_ibm_cloud.powervs.client import PowerVSClient
 
@@ -274,7 +274,8 @@ def main() -> int:
         Exit code
     """
     opts = powervs_arg_parser().parse_args()
-    opts.name = powervs_name(opts.name)
+    if len(opts.name) > 46:
+        raise PowerVSInvalidNameException("Instance name must be 47 characters or fewer")
 
     setup_logging(opts.log_level)
 

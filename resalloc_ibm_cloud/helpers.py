@@ -78,13 +78,3 @@ def setup_logging(log_level="info"):
     logging.basicConfig(level=log_level.upper(), datefmt="[%H:%M:%S]")
 
     root_logger.debug(f"Log level set to {log_level}")
-
-
-def powervs_name(name: str) -> str:
-    """
-    PowerVS has restriction to name, that it must contain maximum of 47
-    characters.
-
-    Returns last 46 characters of the name.
-    """
-    return name[-46:]

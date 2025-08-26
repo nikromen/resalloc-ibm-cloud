@@ -10,3 +10,8 @@ class PowerVSException(ResallocIBMCloudException):
 class PowerVSNotFoundException(PowerVSException):
     """Exception raised when a PowerVS resource is not found."""
     pass
+
+
+class PowerVSInvalidNameException(PowerVSException):
+    """Exception raised when a PowerVS resource name is invalid."""
+    pass

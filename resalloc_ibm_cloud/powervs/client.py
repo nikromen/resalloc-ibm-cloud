@@ -255,3 +255,12 @@ class PowerVSClient:
             "DELETE",
             f"/pvm-instances/{instance_id}/volumes/{volume_id}",
         )
+
+    def list_volumes(self) -> list[dict]:
+        """
+        List all PowerVS volumes
+
+        Returns:
+            List of volumes
+        """
+        return self.request("GET", "/volumes")

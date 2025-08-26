@@ -16,19 +16,39 @@ def list_vms(client: PowerVSClient, pool_id: str) -> set[str]:
 
     Args:
         client: PowerVS client
-        pool_id: Pool ID prefix to filter instances
+        pool_id: Pool ID to filter instances
 
     Returns:
         Set of resource names that match the pool ID
     """
     resources = set()
-
     for instance in client.list_instances():
-        name = instance.get("serverName", "")
-        if name.startswith(pool_id):
-            resources.add(name)
+        instance_name = instance["serverName"]
+        if instance_name.startswith(pool_id):
+            resources.add(instance_name)
 
     return resources
+
+
+def list_volumes_associated_vms(client: PowerVSClient, pool_id: str) -> set[str]:
+    """
+    List all volumes and get their associated VMs.
+
+    Args:
+        client: PowerVS client
+        pool_id: Pool ID to filter VMs
+
+    Returns:
+        Set of VMs names associated with the specified volumes
+    """
+    vms = set()
+    for volume in client.list_volumes():
+        volume_name = volume["volumeID"]
+        if volume_name.startswith(pool_id):
+            # the dropped suffix is underscore something (_volume)
+            vms.add(volume_name.rsplit("_volume", 1)[0])
+
+    return vms
 
 
 def main():
@@ -43,7 +63,6 @@ def main():
     credentials = get_powervs_credentials(opts.token_file, opts.crn)
     client = PowerVSClient(credentials)
 
-    resources = list_vms(client, pool_id)
-
+    resources = list_vms(client, pool_id) | list_volumes_associated_vms(client, pool_id)
     for name in resources:
         print(name)
