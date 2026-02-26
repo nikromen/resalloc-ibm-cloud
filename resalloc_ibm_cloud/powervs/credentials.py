@@ -32,8 +32,13 @@ class PowerVSCredentials:
 
     @property
     def service_url(self) -> str:
-        """PowerVS service URL for the region"""
+        """PowerVS service URL for the region (/pcloud/v1 API path)"""
         return f"{self.iaas_url}/pcloud/v1"
+
+    @property
+    def v1_url(self) -> str:
+        """PowerVS v1 API URL (/v1 - totally different API - no pcloud prefix)"""
+        return f"{self.iaas_url}/v1"
 
     @property
     def broker_url(self) -> str:

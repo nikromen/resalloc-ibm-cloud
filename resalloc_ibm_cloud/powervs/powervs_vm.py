@@ -10,7 +10,7 @@ from time import sleep
 from typing import Any, Optional
 
 import backoff
-from requests import HTTPError
+from requests import HTTPError, RequestException
 import requests
 
 from resalloc_ibm_cloud.argparsers import powervs_arg_parser
@@ -162,6 +162,39 @@ class PowerVSVMManager:
         self.client.delete_volume(volume_id)
         logger.info("Deleted volume with ID %s", volume_id)
 
+    def _wait_for_instance_gone(
+        self, instance_id: str, timeout: int = 600, interval: int = 10,
+    ) -> None:
+        """
+        Poll until the instance no longer exists (404) so that its network
+        interfaces are safe to delete.
+        """
+        start_time = time.time()
+        while True:
+            if time.time() - start_time > timeout:
+                logger.warning(
+                    "Timed out waiting for instance %s to be fully deleted",
+                    instance_id,
+                )
+                break
+
+            try:
+                instance = self.client.get_instance(instance_id)
+                status = instance.get("status", "unknown")
+                logger.info(
+                    "Waiting for instance %s to be deleted (status: %s)",
+                    instance_id, status,
+                )
+            except RequestException as e:
+                if e.response.status_code == 404:
+                    logger.info("Instance %s is gone", instance_id)
+                    return
+
+                logger.error("Failed to get instance %s: %s", instance_id, str(e))
+                break
+
+            sleep(interval)
+
     def _force_delete_volume_by_instance_name(self, instance_name: str) -> None:
         # if powervs decides to fail and keep the volume around, force delete any
         # volume that starts with the instance name
@@ -198,6 +231,18 @@ class PowerVSVMManager:
         instance_information = self.client.get_instance(instance_id)
         volume_ids = instance_information.get("volumeIDs", [])
 
+        # IBM Cloud does not automatically clean up network interfaces (ports)
+        # when a VM is deleted, which eventually exhausts the subnet IP pool.
+        # We need to remember them now and delete them after the instance is gone.
+        # This is a new thing in PowerVS, maybe in the future it will be handled automatically
+        # again???
+        network_interfaces = []
+        for net in instance_information.get("networks", []):
+            network_id = net.get("networkID")
+            interface_id = net.get("networkInterfaceID")
+            if network_id and interface_id:
+                network_interfaces.append((network_id, interface_id))
+
         # the data volumes tends to remain undeleted even if the delete_instance
         # call is with delete_data_volumes, so this needs to be assured manually
         for volume_id in volume_ids:
@@ -217,6 +262,19 @@ class PowerVSVMManager:
             name,
             instance_id,
         )
+
+        if not network_interfaces:
+            return
+
+        self._wait_for_instance_gone(instance_id)
+        for network_id, interface_id in network_interfaces:
+            try:
+                self.client.delete_network_interface(network_id, interface_id)
+            except RequestException as e:
+                logger.error(
+                    "Failed to delete network interface %s: %s",
+                    interface_id, str(e),
+                )
 
     def _parse_volumes(self, volumes_list: list[str]) -> list[dict]:
         """

@@ -247,3 +247,18 @@ def powervs_list_deleting_vms_parser():
     """
     parser = _default_arg_parser_powervs(prog=_pfx("powervs-list-deleting-vms"))
     return parser
+
+
+def powervs_cleanup_ips_parser():
+    """
+    Parser for the resalloc-ibm-cloud-powervs-cleanup-ips utility.
+    """
+    parser = _default_arg_parser_powervs(prog=_pfx("powervs-cleanup-ips"))
+    parser.add_argument(
+        "--network-id",
+        type=str,
+        nargs="+",
+        required=True,
+        help="One or more network (subnet) IDs to clean up orphaned IPs from",
+    )
+    return parser

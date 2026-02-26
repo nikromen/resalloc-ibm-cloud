@@ -52,6 +52,7 @@ BuildRequires:  pyproject-rpm-macros
 %{_bindir}/resalloc-ibm-cloud-powervs-list-deleting-vms
 %{_bindir}/resalloc-ibm-cloud-powervs-list-vms
 %{_bindir}/resalloc-ibm-cloud-powervs-vm
+%{_bindir}/resalloc-ibm-cloud-powervs-cleanup-ips
 
 
 %changelog

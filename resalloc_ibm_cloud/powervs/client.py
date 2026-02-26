@@ -63,6 +63,7 @@ class PowerVSClient:
         params: dict = None,
         json_data: dict = None,
         broker: bool = False,
+        v1_api: bool = False,
     ) -> dict:
         """
         Make a request to the PowerVS API with automatic retry for server errors
@@ -78,6 +79,8 @@ class PowerVSClient:
             params: Query parameters
             json_data: JSON body data
             broker: Whether to use the broker API
+            v1_api: Whether to use the newer /v1 API (endpoints migrated
+                from /pcloud/v1); these don't use the cloud-instance prefix
 
         Returns:
             Response JSON
@@ -88,12 +91,15 @@ class PowerVSClient:
             requests.RequestException: For other request-related errors after
                 retries are exhausted
         """
-        base_url = (
-            self.credentials.broker_url if broker else self.credentials.service_url
-        )
+        if v1_api:
+            base_url = self.credentials.v1_url
+        elif broker:
+            base_url = self.credentials.broker_url
+        else:
+            base_url = self.credentials.service_url
 
-        # set prefix path for powervs API workspace
-        if not broker and not path.startswith(
+        # set prefix path for powervs API workspace (legacy /pcloud/v1 only)
+        if not broker and not v1_api and not path.startswith(
             f"/cloud-instances/{self.cloud_instance_id}"
         ):
             path = f"/cloud-instances/{self.cloud_instance_id}{path}"
@@ -264,3 +270,40 @@ class PowerVSClient:
             List of volumes
         """
         return self.request("GET", "/volumes").get("volumes", [])
+
+    def list_network_interfaces(self, network_id: str) -> list[dict]:
+        """
+        List all network interfaces (ports) on a given network.
+
+        Args:
+            network_id: Network (subnet) ID
+
+        Returns:
+            List of network interfaces
+        """
+        response = self.request(
+            "GET",
+            f"/networks/{network_id}/network-interfaces",
+            v1_api=True,
+        )
+        return response.get("interfaces", [])
+
+    def delete_network_interface(
+        self, network_id: str, interface_id: str
+    ) -> None:
+        """
+        Delete a network interface (port) from a network.
+
+        Args:
+            network_id: Network (subnet) ID
+            interface_id: Network interface ID to delete
+        """
+        logger.info(
+            "Deleting network interface %s from network %s",
+            interface_id, network_id,
+        )
+        self.request(
+            "DELETE",
+            f"/networks/{network_id}/network-interfaces/{interface_id}",
+            v1_api=True,
+        )

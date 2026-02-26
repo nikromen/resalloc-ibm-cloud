@@ -27,6 +27,7 @@ resalloc-ibm-cloud-vm = "resalloc_ibm_cloud.ibm_cloud_vm:main"
 resalloc-ibm-cloud-powervs-vm = "resalloc_ibm_cloud.powervs.powervs_vm:main"
 resalloc-ibm-cloud-powervs-list-vms = "resalloc_ibm_cloud.powervs.powervs_list_vms:main"
 resalloc-ibm-cloud-powervs-list-deleting-vms = "resalloc_ibm_cloud.powervs.powervs_list_deleting_vms:main"
+resalloc-ibm-cloud-powervs-cleanup-ips = "resalloc_ibm_cloud.powervs.powervs_cleanup_ips:main"
 
 
 [build-system]
@@ -47,4 +48,5 @@ manpages = [
     "man/resalloc-ibm-cloud-powervs-vm.1:function=powervs_arg_parser:pyfile=resalloc_ibm_cloud/argparsers.py",
     "man/resalloc-ibm-cloud-powervs-list-vms.1:function=powervs_list_vms_parser:pyfile=resalloc_ibm_cloud/argparsers.py",
     "man/resalloc-ibm-cloud-powervs-list-deleting-vms.1:function=powervs_list_deleting_vms_parser:pyfile=resalloc_ibm_cloud/argparsers.py",
+    "man/resalloc-ibm-cloud-powervs-cleanup-ips.1:function=powervs_cleanup_ips_parser:pyfile=resalloc_ibm_cloud/argparsers.py",
 ]
